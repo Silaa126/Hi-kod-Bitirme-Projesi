@@ -26,9 +26,24 @@ print(df.describe())
 
 # Eksik verileri kontrol ediyoruz 
 # Eksik değerlerin hangi sütunlarda bulunduğunu ve bu eksik verilerin oranlarını tespit edin. 
-# Eksik veri olup olmadığını kontrol etmek için:
-print(df.isnull().sum())
+# Eksik değer analizi
+missing_data = df.isnull().sum() / len(df) * 100  # Eksik değerlerin oranını yüzdesel olarak bulma
+print("Eksik değer oranları (%):\n", missing_data)
 
+# Eksik veri doldurma
+for column in df.columns:
+    if df[column].isnull().sum() > 0:  # Sadece eksik veri içeren sütunları kontrol eder
+        if missing_data[column] < 5:  # Eksik veri oranı %5'ten az ise
+            # Sayısal veri için ortalama, kategorik veri için mod ile doldurma
+            if df[column].dtype == 'float64' or df[column].dtype == 'int64':
+                df[column].fillna(df[column].mean(), inplace=True)
+            else:
+                df[column].fillna(df[column].mode()[0], inplace=True)
+        else:
+            print(f"{column} sütununda eksik veri oranı %5'ten fazla, bu sütunu elle gözden geçirin.")
+
+# Eksik değer kontrolü
+print("Doldurma sonrası eksik veri sayıları:\n", df.isnull().sum())
 
 # Eksik veri içeren satır ve sütunları silme
 df.dropna(inplace=True)
@@ -146,3 +161,123 @@ plt.xlabel('Retweet Count')
 plt.ylabel('Year')
 plt.legend(title='Platform')
 plt.show()
+
+# Aykırı veri analizi: verinin dağılımını ve aykırı değerleri görmek için görselleştirmeler eklenmiş. 
+# Aykırı değerler özellikle Retweets, Likes gibi etkileşim verilerinde önemlidir, çünkü analizde 
+# sapmaya yol açabilir. Bu nedenle bu değerler görsele dökülmüştür.
+# Likes sütunu için boxplot
+plt.figure(figsize=(10, 5))
+sns.boxplot(x='Likes', data=df)
+plt.title("Likes Sütunu Aykırı Değer Analizi")
+plt.show()
+
+# Retweets sütunu için boxplot
+plt.figure(figsize=(10, 5))
+sns.boxplot(x='Retweets', data=df)
+plt.title("Retweets Sütunu Aykırı Değer Analizi")
+plt.show()
+
+# Histogram for Retweets
+plt.figure(figsize=(10, 5))
+sns.histplot(df['Retweets'], bins=30, kde=True)
+plt.title("Retweets Sütunu Histogramı")
+plt.show()
+
+
+# Histogram for Likes
+plt.figure(figsize=(10, 5))
+sns.histplot(df['Likes'], bins=30, kde=True)
+plt.title("Likes Sütunu Histogramı")
+plt.show()
+
+# Metin sütununda duygu durumları etiketlenmiş (Pozitif, Negatif, Nötr). 
+# Duygu analizi sonuçlarının kelime dağılımlarıyla birlikte değerlendirilmesi 
+# verinin daha iyi anlaşılmasını sağlar. Bu nedenle burada bu durumun analizi yapılmıştır.
+# Positive Sentiment için Word Cloud
+from wordcloud import WordCloud
+positive_text = " ".join(df[df['Sentiment'] == 'Positive']['Text'])
+wordcloud = WordCloud().generate(positive_text)
+plt.imshow(wordcloud, interpolation='bilinear')
+plt.title("Positive Sentiment Word Cloud")
+plt.axis("off")
+plt.show()     
+
+# Negative Sentiment için Word Cloud
+negative_text = " ".join(df[df['Sentiment'] == 'Negative']['Text'])
+wordcloud_negative = WordCloud().generate(negative_text)
+
+plt.figure(figsize=(10, 5))
+plt.imshow(wordcloud_negative, interpolation='bilinear')
+plt.axis("off")
+plt.title("Negative Sentiment Word Cloud")
+plt.show()
+
+# Neutral Sentiment için Word Cloud
+neutral_text = " ".join(df[df['Sentiment'] == 'Neutral']['Text'])
+wordcloud_neutral = WordCloud().generate(neutral_text)
+
+plt.figure(figsize=(10, 5))
+plt.imshow(wordcloud_neutral, interpolation='bilinear')
+plt.axis("off")
+plt.title("Neutral Sentiment Word Cloud")
+plt.show()
+
+# Platform ve Etkileşim Analizi:
+# Platform değişkenine göre beğeni, retweet ve duygu durumlarının nasıl dağıldığını incelemek, 
+# hangi platformda daha fazla etkileşim alındığını veya kullanıcıların duygu durumlarını belirleyebilir.
+#Bu nedenle platform bazında groupby() ile etkileşimleri analiz edebilir ve görselleştirilir.
+platform_likes = df.groupby('Platform')['Likes'].mean()
+platform_likes.plot(kind='bar')
+plt.ylabel('Average Likes')
+plt.show()                                                                                                                       
+
+# Farklı platformlardaki duygu dağılımı ile bu platformlardaki etkileşim oranlarını karşılaştırmak,
+# belirli platformların kullanıcı psikolojisine etkisi olup olmadığını anlamaya yardımcı olur.                                                                                                                    Aşırı Etkileşim Alan İçeriklerin Özellikleri: Aşırı etkileşim alan içerikler kullanıcıların dikkatini daha fazla çekiyor olabilir, bu da sosyal medyada dikkat çekici veya manipülatif içeriklerin nasıl öne çıktığını gösterebilir.
+# Günlük Etkileşim Yoğunluğu ve Duygu Durumu Trendleri: Günlük veya haftalık duygu durumu değişimleri,
+# kullanıcıların belirli günlerde daha yoğun etkileşim gösterip göstermediğini ve bu durumun içerik 
+# türlerine göre nasıl değiştiğini gösterebilir. Aşağıdakiko dizisinde ise bunun analizi yapılmıştır.
+
+
+
+
+
+# Platformlardaki duygu dağılımını görselleştirme
+plt.figure(figsize=(12, 6))
+sns.countplot(data=df, x='Platform', hue='Sentiment')
+plt.title("Farklı Platformlardaki Duygu Dağılımı")
+# Legend'i grafiğin dışına taşıma ve daha okunaklı hale getirme
+plt.legend(title='Sentiment', bbox_to_anchor=(1, 1), loc='upper left', fontsize='small', ncol=3)
+plt.subplots_adjust(left=0.05)  # Sol kenar boşluğunu azaltarak grafiği sola kaydırır
+plt.tight_layout()  # Grafik elemanlarının sığması için kullanılır
+plt.show()
+
+
+
+
+# Platformlara göre etkileşim oranlarını hesaplama ve görselleştirme
+df['Engagement'] = df['Likes'] + df['Retweets']
+platform_engagement = df.groupby('Platform')['Engagement'].mean().reset_index()
+
+plt.figure(figsize=(10, 5))
+sns.barplot(data=platform_engagement, x='Platform', y='Engagement')
+plt.title("Farklı Platformlardaki Ortalama Etkileşim Oranları")
+plt.show()
+
+# Aşırı etkileşim alan içerikleri belirleme (üst %10)
+top_10_percent_engagement = df['Engagement'].quantile(0.9)
+high_engagement_content = df[df['Engagement'] > top_10_percent_engagement]
+
+# Aşırı etkileşim alan içeriklerin özelliklerini görselleştirme
+plt.figure(figsize=(12, 6))
+sns.countplot(data=high_engagement_content, x='Sentiment')
+plt.title("Aşırı Etkileşim Alan İçeriklerin Duygu Dağılımı")
+# Duygu etiketlerini dikey olarak yazma
+plt.xticks(rotation=90)  # Etiketleri 90 derece döndürerek dikey yapar
+plt.tight_layout()  # Grafik elemanlarının sığması için kullanılır
+plt.show()
+
+plt.figure(figsize=(12, 6))
+sns.countplot(data=high_engagement_content, x='Platform')
+plt.title("Aşırı Etkileşim Alan İçeriklerin Platform Dağılımı")
+plt.show()
+
