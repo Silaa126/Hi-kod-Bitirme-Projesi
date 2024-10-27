@@ -168,26 +168,26 @@ plt.show()
 # Likes sütunu için boxplot
 plt.figure(figsize=(10, 5))
 sns.boxplot(x='Likes', data=df)
-plt.title("Likes Sütunu Aykırı Değer Analizi")
+plt.title("Likes Column Outlier Analysis")
 plt.show()
 
 # Retweets sütunu için boxplot
 plt.figure(figsize=(10, 5))
 sns.boxplot(x='Retweets', data=df)
-plt.title("Retweets Sütunu Aykırı Değer Analizi")
+plt.title("Retweets Column Outlier Analysis")
 plt.show()
 
 # Histogram for Retweets
 plt.figure(figsize=(10, 5))
 sns.histplot(df['Retweets'], bins=30, kde=True)
-plt.title("Retweets Sütunu Histogramı")
+plt.title("Retweets Column Histogram")
 plt.show()
 
 
 # Histogram for Likes
 plt.figure(figsize=(10, 5))
 sns.histplot(df['Likes'], bins=30, kde=True)
-plt.title("Likes Sütunu Histogramı")
+plt.title("Likes Column Histogram")
 plt.show()
 
 # Metin sütununda duygu durumları etiketlenmiş (Pozitif, Negatif, Nötr). 
@@ -236,22 +236,28 @@ plt.show()
 # Günlük Etkileşim Yoğunluğu ve Duygu Durumu Trendleri: Günlük veya haftalık duygu durumu değişimleri,
 # kullanıcıların belirli günlerde daha yoğun etkileşim gösterip göstermediğini ve bu durumun içerik 
 # türlerine göre nasıl değiştiğini gösterebilir. Aşağıdakiko dizisinde ise bunun analizi yapılmıştır.
+# Platform sütunundaki fazladan boşlukları ve büyük/küçük harf farklarını kaldırma
+df['Platform'] = df['Platform'].str.strip().str.lower()
 
+# Ana duyguları içeren bir filtre oluşturma
+ana_duygular = df[df['Sentiment'].isin(['Positive', 'Negative', 'Neutral'])]
 
+# Grafiği oluşturma
+plt.figure(figsize=(14, 8))
+sns.countplot(data=ana_duygular, x='Platform', hue='Sentiment', palette='coolwarm')
+plt.title("Main Sentiment Distribution by Platforms", fontsize=16, fontweight='bold')
+plt.xlabel("Platform", fontsize=12)
+plt.ylabel("Number of Sentiment ", fontsize=12)
+plt.xticks(rotation=45)
+plt.legend(title='Sentiment', bbox_to_anchor=(1.05, 1), loc='upper left')
 
+# Çubuklara değer etiketleri ekleme
+for container in plt.gca().containers:
+    plt.bar_label(container, label_type="edge", fontsize=10)
 
-
-# Platformlardaki duygu dağılımını görselleştirme
-plt.figure(figsize=(12, 6))
-sns.countplot(data=df, x='Platform', hue='Sentiment')
-plt.title("Farklı Platformlardaki Duygu Dağılımı")
-# Legend'i grafiğin dışına taşıma ve daha okunaklı hale getirme
-plt.legend(title='Sentiment', bbox_to_anchor=(1, 1), loc='upper left', fontsize='small', ncol=3)
-plt.subplots_adjust(left=0.05)  # Sol kenar boşluğunu azaltarak grafiği sola kaydırır
-plt.tight_layout()  # Grafik elemanlarının sığması için kullanılır
+plt.subplots_adjust(bottom=0.2, top=0.85, left=0.1)
+plt.tight_layout()
 plt.show()
-
-
 
 
 # Platformlara göre etkileşim oranlarını hesaplama ve görselleştirme
@@ -260,7 +266,7 @@ platform_engagement = df.groupby('Platform')['Engagement'].mean().reset_index()
 
 plt.figure(figsize=(10, 5))
 sns.barplot(data=platform_engagement, x='Platform', y='Engagement')
-plt.title("Farklı Platformlardaki Ortalama Etkileşim Oranları")
+plt.title("Average Engagement Rates Across Different Platforms")
 plt.show()
 
 # Aşırı etkileşim alan içerikleri belirleme (üst %10)
@@ -270,7 +276,7 @@ high_engagement_content = df[df['Engagement'] > top_10_percent_engagement]
 # Aşırı etkileşim alan içeriklerin özelliklerini görselleştirme
 plt.figure(figsize=(12, 6))
 sns.countplot(data=high_engagement_content, x='Sentiment')
-plt.title("Aşırı Etkileşim Alan İçeriklerin Duygu Dağılımı")
+plt.title("Sentiment Distribution of Highly İnteractive Content")
 # Duygu etiketlerini dikey olarak yazma
 plt.xticks(rotation=90)  # Etiketleri 90 derece döndürerek dikey yapar
 plt.tight_layout()  # Grafik elemanlarının sığması için kullanılır
@@ -278,6 +284,6 @@ plt.show()
 
 plt.figure(figsize=(12, 6))
 sns.countplot(data=high_engagement_content, x='Platform')
-plt.title("Aşırı Etkileşim Alan İçeriklerin Platform Dağılımı")
+plt.title("Platform Distribution of Highly İnteractive Content")
 plt.show()
 
